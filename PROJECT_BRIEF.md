@@ -11,7 +11,8 @@ Generate large batches of original, short finance and marketing content drafts f
 ## Smallest useful release
 - [x] Main journey: enter category, topic, lesson, audience, and batch size → generate drafts → run basic checks → copy/export.
 - [x] Acceptance criteria: mobile-friendly UI; configurable batch up to 5,000; drafts stored locally; CSV export; transparent framework labels; no external API dependency.
-- [x] Explicitly out of scope: live creator scraping, cloning exact voices/posts, factual research automation, AI provider calls, auto-publishing, accounts, and backend storage.
+- [x] Creator Intelligence v1: five manually curated creator records, five public source references, category/search filters, five generalized patterns, selected-pattern generation, and source IDs preserved in CSV.
+- [x] Explicitly out of scope: live creator scraping, cloning exact voices/posts, transcript-level systematic analysis, factual research automation, AI provider calls, auto-publishing, accounts, and backend storage.
 
 ## Validation and monetization
 - Fastest demand test: use generated drafts in a real creator workflow and ask users to evaluate originality and time saved.
@@ -32,8 +33,8 @@ Generate large batches of original, short finance and marketing content drafts f
 - Deployment target: not configured/verified.
 
 ## Verification evidence
-- Build/test results: pending execution in a Node.js environment.
+- Build/test results: CI verification pending for Creator Intelligence v1; previous MVP CI passed 7/7 tests and production build.
 - Preview URL: not configured.
-- Known gaps: local rule-based output, basic quality checks only, browser-local persistence, no auto-publishing.
+- Known gaps: small manually curated source sample; qualitative observations only; no transcript-level audits or performance attribution; local rule-based output; basic quality checks only; browser-local persistence; no auto-publishing.
 - Production approval: not requested.
 - Customer/revenue evidence: none yet.
