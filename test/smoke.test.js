@@ -66,7 +66,7 @@ test('the React app renders the actual content generation workflow', async () =>
     const { default: App } = await server.ssrLoadModule('/src/App.jsx');
     const html = renderToStaticMarkup(createElement(App));
     assert.match(html, /One idea/);
-    assert.match(html, /Generate original drafts/);
+    assert.match(html, /Prepare Gemini prompt/);
     assert.match(html, /AI-assisted/);
     assert.match(html, /Communication frameworks/);
     assert.match(html, /Export CSV/);
