@@ -66,21 +66,15 @@ const endings = [
   "Send this to someone building in this space.",
 ];
 
-function buildPatternText(patternId, { topic, idea, audience, hook, angle, lesson, ending }) {
-  switch (patternId) {
-    case "plain-language-explainer":
-      return `${hook} Think of it in practical terms: ${idea}. ${angle} ${lesson} ${ending}`;
-    case "evidence-first-teacher":
-      return `Before accepting a claim about ${topic}, ask what evidence would support it. ${angle} ${lesson} Leave room for uncertainty when the evidence is incomplete. ${ending}`;
-    case "audience-intent-guide":
-      return `If you are ${audience}, start with the problem you need to solve in ${topic}. ${angle} ${lesson} ${ending}`;
-    case "problem-to-process":
-      return `If progress with ${topic} has stalled, do not add more tasks yet. Find the decision or bottleneck that matters most. ${lesson} ${angle} ${ending}`;
-    case "story-to-lesson":
-      return `Imagine working on ${topic} and trying several things at once. The turning point is choosing one useful lesson: ${idea}. ${angle} ${lesson} ${ending}`;
-    default:
-      return `${hook} ${angle} ${lesson} ${ending}`;
-  }
+function buildPatternText(patternId, { topic, audience, dna }) {
+  const framing = {
+    "plain-language-explainer": `A practical way to understand ${topic} is to make the next decision clear.`,
+    "evidence-first-teacher": `Before accepting a claim about ${topic}, ask what evidence would support it.`,
+    "audience-intent-guide": `If you are ${audience}, start with the problem you need to solve in ${topic}.`,
+    "problem-to-process": `If progress with ${topic} has stalled, identify the bottleneck before adding more tasks.`,
+    "story-to-lesson": `Imagine facing a decision about ${topic}; the useful lesson is in what you choose to examine.`,
+  }[patternId] || `Take a practical look at ${topic}.`;
+  return `${framing} ${dna.lines[0]} ${dna.lines[2]} ${dna.lines[4]} ${dna.lines[6]}`;
 }
 
 export function generatePosts({ topic, idea, audience = "creators and business owners", category = "Marketing", count = 10, seed = 0, patternId = "auto" }) {
@@ -103,8 +97,7 @@ export function generatePosts({ topic, idea, audience = "creators and business o
     const ending = endings[Math.floor(variant / (hooks.length * lessons.length)) % endings.length];
     const angle = angles[Math.floor(variant / (hooks.length * lessons.length * endings.length)) % angles.length];
     const dna = composeContentDNA({ topic: cleanTopic, idea: cleanIdea, audience: cleanAudience, index: cursor, seed });
-    const dnaText = [dna.lines[0], dna.lines[2], dna.lines[4], dna.lines[6]].join(' ');
-    const text = `${buildPatternText(pattern.id, { topic: cleanTopic, idea: cleanIdea, audience: cleanAudience, hook, angle, lesson, ending })} ${dnaText}`;
+    const text = buildPatternText(pattern.id, { topic: cleanTopic, audience: cleanAudience, dna });
     const key = text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
     if (!seen.has(key)) {
       seen.add(key);
