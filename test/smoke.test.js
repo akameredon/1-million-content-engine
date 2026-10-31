@@ -9,11 +9,13 @@ import { composeContentDNA, contentDnaDimensions, scoreDiversity } from '../src/
 import { assessPosts as assessQuality, summarizeQuality } from '../src/qualityEngine.js';
 import { creatorProfiles, researchPatterns, researchSources } from '../src/researchLibrary.js';
 import { createEvidenceRecord, getEvidenceReadiness, getPublicationReadiness, reviewEvidence } from '../src/evidenceEngine.js';
+import geminiHandler from '../api/generate.js';
+import { generateAiPosts, getAiServiceStatus } from '../src/aiGeneration.js';
 
 const root = new URL('../', import.meta.url);
 
 test('project has its required app entry points', async () => {
-  for (const path of ['index.html', 'src/main.jsx', 'src/App.jsx', 'src/style.css', 'src/contentEngine.js']) await access(new URL(path, root));
+  for (const path of ['index.html', 'src/main.jsx', 'src/App.jsx', 'src/style.css', 'src/contentEngine.js', 'src/aiGeneration.js', 'api/generate.js']) await access(new URL(path, root));
 });
 
 test('package identity and scripts are configured for this product', async () => {
@@ -65,6 +67,7 @@ test('the React app renders the actual content generation workflow', async () =>
     const html = renderToStaticMarkup(createElement(App));
     assert.match(html, /One idea/);
     assert.match(html, /Generate original drafts/);
+    assert.match(html, /AI-assisted/);
     assert.match(html, /Communication frameworks/);
     assert.match(html, /Export CSV/);
   } finally { await server.close(); }
@@ -199,4 +202,91 @@ test('marketing numeric claims are evidence-gated and CSV preserves review trace
   const csv = toCsv([{ ...post, evidence: createEvidenceRecord({ claim: 'This campaign produced 25% growth.', title: 'Case study', url: 'https://example.com/case' }) }]);
   assert.match(csv, /evidence_claim,evidence_url,evidence_title/);
   assert.match(csv, /provided/);
+});
+
+function apiRequest(method, body, headers = {}) {
+  const req = { method, body, headers: { host: 'content.test', origin: 'https://content.test', ...headers }, async *[Symbol.asyncIterator]() {} };
+  const res = {
+    statusCode: 200, headers: {},
+    setHeader(name, value) { this.headers[name] = value; },
+    end(value) { this.body = value; },
+  };
+  return { req, res, run: async () => { await geminiHandler(req, res); return { status: res.statusCode, headers: res.headers, payload: JSON.parse(res.body) }; } };
+}
+
+test('AI status endpoint reports setup without revealing credentials', async () => {
+  const oldKey = process.env.GEMINI_API_KEY, oldToken = process.env.CONTENT_ENGINE_ACCESS_TOKEN;
+  delete process.env.GEMINI_API_KEY; delete process.env.CONTENT_ENGINE_ACCESS_TOKEN;
+  try {
+    const result = await apiRequest('GET').run();
+    assert.equal(result.status, 200); assert.equal(result.payload.configured, false);
+    assert.equal(JSON.stringify(result.payload).includes('API_KEY'), false);
+  } finally {
+    if (oldKey === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = oldKey;
+    if (oldToken === undefined) delete process.env.CONTENT_ENGINE_ACCESS_TOKEN; else process.env.CONTENT_ENGINE_ACCESS_TOKEN = oldToken;
+  }
+});
+
+test('AI endpoint rejects incorrect access codes and batches over ten', async () => {
+  const oldKey = process.env.GEMINI_API_KEY, oldToken = process.env.CONTENT_ENGINE_ACCESS_TOKEN;
+  process.env.GEMINI_API_KEY = 'server-key-test'; process.env.CONTENT_ENGINE_ACCESS_TOKEN = 'correct-access-code';
+  try {
+    const denied = await apiRequest('POST', { topic: 'marketing', idea: 'test an offer', count: 2 }, { authorization: 'Bearer wrong', 'x-forwarded-for': 'ai-test-ip-1' }).run();
+    assert.equal(denied.status, 401);
+    const invalid = await apiRequest('POST', { topic: 'marketing', idea: 'test an offer', count: 11 }, { authorization: 'Bearer correct-access-code', 'x-forwarded-for': 'ai-test-ip-2' }).run();
+    assert.equal(invalid.status, 400); assert.match(invalid.payload.error, /1–10/);
+  } finally {
+    if (oldKey === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = oldKey;
+    if (oldToken === undefined) delete process.env.CONTENT_ENGINE_ACCESS_TOKEN; else process.env.CONTENT_ENGINE_ACCESS_TOKEN = oldToken;
+  }
+});
+
+test('AI endpoint sends the Gemini key in a header and returns validated draft metadata', async () => {
+  const oldKey = process.env.GEMINI_API_KEY, oldToken = process.env.CONTENT_ENGINE_ACCESS_TOKEN, oldModel = process.env.GEMINI_MODEL, oldFetch = globalThis.fetch;
+  process.env.GEMINI_API_KEY = 'server-only-secret'; process.env.CONTENT_ENGINE_ACCESS_TOKEN = 'server-access-code'; process.env.GEMINI_MODEL = 'gemini-3.1-flash-lite';
+  let captured;
+  globalThis.fetch = async (url, options) => {
+    captured = { url: String(url), options };
+    return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify({ posts: [
+      { text: 'A useful short lesson about testing a marketing message with one clear audience and one measurable next step.', angle: 'Small experiment' },
+      { text: 'Before changing every channel, find the customer problem your offer actually solves and explain it plainly.', angle: 'Customer clarity' },
+    ] }) }] } }] }) };
+  };
+  try {
+    const result = await apiRequest('POST', { topic: 'customer acquisition', idea: 'test one channel', audience: 'small business owners', category: 'Marketing', count: 2, patternId: 'auto' }, { authorization: 'Bearer server-access-code', 'x-forwarded-for': 'ai-test-ip-3' }).run();
+    assert.equal(result.status, 200); assert.equal(result.payload.posts.length, 2);
+    assert.equal(result.payload.posts[0].generationMode, 'ai'); assert.equal(result.payload.posts[0].aiModel, 'gemini-3.1-flash-lite');
+    assert.equal(captured.options.headers['x-goog-api-key'], 'server-only-secret');
+    assert.equal(captured.url.includes('server-only-secret'), false); assert.equal(captured.options.body.includes('server-only-secret'), false);
+    assert.equal(JSON.parse(captured.options.body).generationConfig.responseMimeType, 'application/json');
+  } finally {
+    globalThis.fetch = oldFetch;
+    if (oldKey === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = oldKey;
+    if (oldToken === undefined) delete process.env.CONTENT_ENGINE_ACCESS_TOKEN; else process.env.CONTENT_ENGINE_ACCESS_TOKEN = oldToken;
+    if (oldModel === undefined) delete process.env.GEMINI_MODEL; else process.env.GEMINI_MODEL = oldModel;
+  }
+});
+
+test('AI endpoint rejects cross-origin requests and unsupported methods', async () => {
+  const cross = await apiRequest('POST', {}, { origin: 'https://attacker.test', 'x-forwarded-for': 'ai-test-ip-4' }).run();
+  assert.equal(cross.status, 403);
+  const method = await apiRequest('DELETE', {}).run(); assert.equal(method.status, 405);
+});
+
+test('AI client sends only the short-lived access code and caps requests at ten', async () => {
+  let captured;
+  const posts = await generateAiPosts({ topic: 'marketing', idea: 'test an offer', audience: 'founders', category: 'Marketing', count: 50, patternId: 'auto' }, 'temporary-access-code', async (url, options) => {
+    captured = { url, options }; return { ok: true, json: async () => ({ posts: [{ id: 'ai-1', text: 'A generated draft.' }] }) };
+  });
+  assert.equal(posts.length, 1); assert.equal(captured.url, '/api/generate');
+  assert.equal(captured.options.headers.Authorization, 'Bearer temporary-access-code');
+  assert.equal(JSON.parse(captured.options.body).count, 10);
+});
+
+test('AI client reads provider readiness without persisting credentials', async () => {
+  const status = await getAiServiceStatus(async (url, options) => {
+    assert.equal(url, '/api/generate'); assert.equal(options.method, 'GET');
+    return { ok: true, json: async () => ({ configured: true, provider: 'Google Gemini', maxBatch: 10 }) };
+  });
+  assert.equal(status.configured, true); assert.equal(status.maxBatch, 10);
 });
