@@ -9,7 +9,7 @@ export const creatorFrameworks = researchPatterns.map((pattern) => ({
   note: "A generalized communication pattern, not an imitation of a creator.",
 }));
 
-function buildPatternText(patternId, { topic, audience, dna }) {
+function buildPatternText(patternId, { topic, audience, dna, contextLine }) {
   const framing = {
     "plain-language-explainer": `A practical way to understand ${topic} is to make the next decision clear.`,
     "evidence-first-teacher": `Before accepting a claim about ${topic}, ask what evidence would support it.`,
@@ -17,7 +17,7 @@ function buildPatternText(patternId, { topic, audience, dna }) {
     "problem-to-process": `If progress with ${topic} has stalled, identify the bottleneck before adding more tasks.`,
     "story-to-lesson": `Imagine facing a decision about ${topic}; the useful lesson is in what you choose to examine.`,
   }[patternId] || `Take a practical look at ${topic}.`;
-  return `${framing} ${dna.lines[0]} ${dna.lines[2]} ${dna.lines[4]} ${dna.lines[6]}`;
+  return `${framing} ${dna.lines[0]} ${contextLine} ${dna.lines[2]} ${dna.lines[4]} ${dna.lines[6]}`;
 }
 
 export function generatePosts({ topic, idea, audience = "creators and business owners", category = "Marketing", count = 10, seed = 0, patternId = "auto" }) {
@@ -35,7 +35,8 @@ export function generatePosts({ topic, idea, audience = "creators and business o
   while (posts.length < total && attempts < total * 20) {
     const pattern = selectedPatterns[cursor % selectedPatterns.length];
     const dna = composeContentDNA({ topic: cleanTopic, idea: cleanIdea, audience: cleanAudience, index: cursor, seed });
-    const text = buildPatternText(pattern.id, { topic: cleanTopic, audience: cleanAudience, dna });
+    const contextLine = dna.lines[[1, 3, 5][cursor % 3]];
+    const text = buildPatternText(pattern.id, { topic: cleanTopic, audience: cleanAudience, dna, contextLine });
     const key = text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
     if (!seen.has(key)) {
       seen.add(key);
