@@ -75,7 +75,8 @@ export function generatePosts({ topic, idea, audience = "creators and business o
   while (posts.length < total && attempts < total * 12) {
     const hook = hooks[cursor % hooks.length](cleanTopic);
     const lesson = lessons[Math.floor(cursor / hooks.length) % lessons.length](cleanIdea);
-    const ending = endings[Math.floor(cursor / (hooks.length * lessons.length)) % endings.length];\n    const angle = angles[Math.floor(cursor / (hooks.length * lessons.length * endings.length)) % angles.length];
+    const ending = endings[Math.floor(cursor / (hooks.length * lessons.length)) % endings.length];
+    const angle = angles[Math.floor(cursor / (hooks.length * lessons.length * endings.length)) % angles.length];
     const framework = creatorFrameworks[cursor % creatorFrameworks.length];
     const post = `${hook} ${angle} ${lesson} ${ending}`;
     const key = post.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
