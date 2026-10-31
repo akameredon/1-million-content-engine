@@ -258,7 +258,7 @@ test('AI endpoint sends the Gemini key in a header and returns validated draft m
     assert.equal(result.payload.posts[0].generationMode, 'ai'); assert.equal(result.payload.posts[0].aiModel, 'gemini-3.1-flash-lite');
     assert.equal(captured.options.headers['x-goog-api-key'], 'server-only-secret');
     assert.equal(captured.url.includes('server-only-secret'), false); assert.equal(captured.options.body.includes('server-only-secret'), false);
-    assert.equal(JSON.parse(captured.options.body).generationConfig.responseFormat.text.mimeType, 'application/json');
+    assert.equal(JSON.parse(captured.options.body).generationConfig.responseFormat.text.mimeType, 'APPLICATION_JSON');
   } finally {
     globalThis.fetch = oldFetch;
     if (oldKey === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = oldKey;
