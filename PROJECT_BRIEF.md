@@ -12,6 +12,7 @@ Generate large batches of original, short finance and marketing content drafts f
 - [x] Main journey: enter category, topic, lesson, audience, and batch size → generate drafts → run basic checks → copy/export.
 - [x] Acceptance criteria: mobile-friendly UI; configurable batch up to 5,000; drafts stored locally; CSV export; transparent framework labels; no external API dependency.
 - [x] Creator Intelligence v1: five manually curated creator records, five public source references, category/search filters, five generalized patterns, selected-pattern generation, and source IDs preserved in CSV.
+- [x] Content DNA v1: seven modular dimensions, deterministic compatible recombination, per-draft component traceability, DNA signatures, diversity scoring, and CSV metadata.
 - [x] Explicitly out of scope: live creator scraping, cloning exact voices/posts, transcript-level systematic analysis, factual research automation, AI provider calls, auto-publishing, accounts, and backend storage.
 
 ## Validation and monetization
@@ -33,8 +34,8 @@ Generate large batches of original, short finance and marketing content drafts f
 - Deployment target: not configured/verified.
 
 ## Verification evidence
-- Build/test results: GitHub Actions passed on the current Creator Intelligence v1 commit: dependency install, all 10 tests, and production build.
+- Build/test results: GitHub Actions passed on the current Creator Intelligence v1 commit: dependency install, all 13 tests, and production build.
 - Preview URL: not configured.
-- Known gaps: small manually curated source sample; qualitative observations only; no transcript-level audits or performance attribution; local rule-based output; basic quality checks only; browser-local persistence; no auto-publishing.
+- Known gaps: small manually curated source sample; qualitative observations only; no transcript-level audits or performance attribution; local rule-based output; structural DNA diversity is not semantic originality or fact-checking; basic quality checks only; browser-local persistence; no auto-publishing.
 - Production approval: not requested.
 - Customer/revenue evidence: none yet.
