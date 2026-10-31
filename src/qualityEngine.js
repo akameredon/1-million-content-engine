@@ -72,7 +72,7 @@ export function assessPosts(posts, options = {}) {
     let nearMatch = null;
 
     if (priorExact !== undefined) {
-      addFlag(flags, "exact-duplicate", "Exact duplicate draft", "critical", 45);
+      addFlag(flags, "exact-duplicate", "Duplicate", "critical", 45);
     } else {
       const candidates = new Set();
       for (const gram of terms) {
