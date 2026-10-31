@@ -33,7 +33,7 @@ Generate large batches of original, short finance and marketing content drafts f
 - Deployment target: not configured/verified.
 
 ## Verification evidence
-- Build/test results: CI verification pending for Creator Intelligence v1; previous MVP CI passed 7/7 tests and production build.
+- Build/test results: GitHub Actions passed on the current Creator Intelligence v1 commit: dependency install, all 10 tests, and production build.
 - Preview URL: not configured.
 - Known gaps: small manually curated source sample; qualitative observations only; no transcript-level audits or performance attribution; local rule-based output; basic quality checks only; browser-local persistence; no auto-publishing.
 - Production approval: not requested.
