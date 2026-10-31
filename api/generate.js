@@ -148,9 +148,13 @@ export default async function handler(req, res) {
       posts: {
         type: "array",
         items: {
-          type: "OBJECT",
-          properties: { text: { type: "string" }, angle: { type: "STRING" } },
-          required: ["text", "angle"],
+          type: "object",
+          properties: {
+            text: { type: "string" },
+            angle: { type: "string" },
+            patternId: { type: "string", enum: allowedPatternIds },
+          },
+          required: ["text", "angle", "patternId"],
         },
       },
     },
