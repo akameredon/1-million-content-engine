@@ -1,5 +1,12 @@
 const ALLOWED_REVIEW_STATES = new Set(["human-verified", "rejected"]);
 
+function isSafeEvidenceUrl(value) {
+  try {
+    const parsed = new URL(String(value || ""));
+    return ["http:", "https:"].includes(parsed.protocol) && !parsed.username && !parsed.password;
+  } catch { return false; }
+}
+
 export function createEvidenceRecord({ claim, url, title, publisher = "", publishedAt = "", excerpt = "" }) {
   const cleanClaim = String(claim || "").trim();
   const cleanUrl = String(url || "").trim();
@@ -23,7 +30,7 @@ export function createEvidenceRecord({ claim, url, title, publisher = "", publis
 }
 
 export function reviewEvidence(record, decision, reviewerNote = "") {
-  if (!record || record.status === "missing") throw new Error("Attach a source before reviewing it.");
+  if (!record || !record.claim || !record.title || !isSafeEvidenceUrl(record.url)) throw new Error("Attach a complete claim and valid public source before reviewing it.");
   if (!ALLOWED_REVIEW_STATES.has(decision)) throw new Error("Choose human-verified or rejected.");
   return {
     ...record,
@@ -35,9 +42,9 @@ export function reviewEvidence(record, decision, reviewerNote = "") {
 
 export function getEvidenceReadiness(post) {
   const evidence = post?.evidence;
-  if (!evidence) return { status: "missing", canPublish: false, reason: "No claim-level source has been attached." };
+  if (!evidence || !evidence.claim || !evidence.title || !isSafeEvidenceUrl(evidence.url)) return { status: "missing", canPublish: false, reason: "No complete claim-level source has been attached." };
   if (evidence.status === "rejected") return { status: "rejected", canPublish: false, reason: "The reviewer rejected this source for the claim." };
-  if (evidence.status !== "human-verified") return { status: "provided", canPublish: false, reason: "A source is attached, but a human has not confirmed that it supports the claim." };
+  if (evidence.status !== "human-verified" || !evidence.reviewedAt) return { status: "provided", canPublish: false, reason: "A source is attached, but a human has not confirmed that it supports the claim." };
   return { status: "human-verified", canPublish: true, reason: "A human reviewer marked this source as supporting the stated claim." };
 }
 
