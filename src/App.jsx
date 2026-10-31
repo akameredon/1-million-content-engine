@@ -4,6 +4,7 @@ import { scoreDiversity } from './contentDNA.js';
 import { creatorProfiles, researchSources } from './researchLibrary.js';
 import { summarizeQuality } from './qualityEngine.js';
 import { createEvidenceRecord, getPublicationReadiness, reviewEvidence } from './evidenceEngine.js';
+import { generateAiPosts, getAiServiceStatus } from './aiGeneration.js';
 
 const STORAGE_KEY = 'million-content-engine-v1';
 const initial = { topic: 'building a profitable business', idea: 'consistent execution and customer feedback', audience: 'global creators and business owners', category: 'Marketing', count: 20, patternId: 'auto' };
@@ -16,6 +17,10 @@ export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [researchCategory, setResearchCategory] = useState('All');
   const [researchQuery, setResearchQuery] = useState('');
+  const [generationMode, setGenerationMode] = useState('local');
+  const [aiAccessCode, setAiAccessCode] = useState('');
+  const [aiServiceStatus, setAiServiceStatus] = useState({ checking: true, configured: false });
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     try {
@@ -31,19 +36,28 @@ export default function App() {
     catch { setNotice('Browser storage is full. Export your drafts to keep a copy.'); }
   }, [posts, loaded]);
 
+  useEffect(() => {
+    getAiServiceStatus().then((status) => setAiServiceStatus({ ...status, checking: false }))
+      .catch(() => setAiServiceStatus({ checking: false, configured: false, unavailable: true }));
+  }, []);
+
   const readyCount = posts.filter((p) => p.quality === 'ready').length;
   const qualitySummary = summarizeQuality(posts);
   const visiblePosts = useMemo(() => filter === 'all' ? posts : posts.filter((p) => p.quality === filter), [posts, filter]);
   const visibleCreators = useMemo(() => creatorProfiles.filter((creator) => (researchCategory === 'All' || creator.category === researchCategory) && [creator.name, creator.channel, creator.observation, creator.principle].join(' ').toLowerCase().includes(researchQuery.toLowerCase())), [researchCategory, researchQuery]);
 
   function update(field, value) { setForm((current) => ({ ...current, [field]: value })); }
-  function generate(event) {
+  async function generate(event) {
     event.preventDefault();
+    if (generating) return;
+    setGenerating(true);
     try {
-      const batch = assessPosts(generatePosts(form));
+      const generated = generationMode === 'ai' ? await generateAiPosts(form, aiAccessCode) : generatePosts(form);
+      const batch = assessPosts(generated);
       setPosts((current) => [...batch, ...current].slice(0, 10000));
-      setNotice(`Generated ${batch.length.toLocaleString()} drafts. Review before publishing.`);
+      setNotice('Generated ' + batch.length.toLocaleString() + ' ' + (generationMode === 'ai' ? 'AI-assisted' : 'local') + ' drafts. Automated checks are not fact-checking; review before use.');
     } catch (error) { setNotice(error.message); }
+    finally { setGenerating(false); }
   }
   function exportCsv() {
     const blob = new Blob([toCsv(posts)], { type: 'text/csv;charset=utf-8' });
@@ -99,9 +113,11 @@ export default function App() {
           <label>Core lesson or idea<textarea value={form.idea} onChange={(e) => update('idea', e.target.value)} rows="3" placeholder="What should the audience learn?" required /></label>
           <label>Who is this for?<input value={form.audience} onChange={(e) => update('audience', e.target.value)} placeholder="e.g. first-time founders" /></label>
           <label>Research pattern<select value={form.patternId} onChange={(e) => update('patternId', e.target.value)}><option value="auto">Auto-mix all 5 patterns</option>{creatorFrameworks.map((pattern) => <option key={pattern.id} value={pattern.id}>{pattern.name}</option>)}</select></label>
-          <div className="batch-row"><label>Drafts in this batch<input type="number" min="1" max="5000" value={form.count} onChange={(e) => update('count', e.target.value)} /></label><span>Maximum 5,000 per run</span></div>
-          <button className="primary-button" type="submit">Generate original drafts <span>↗</span></button>
-          <p className="fine-print">Uses generalized patterns and local checks. It does not scrape creators, imitate their voices, or verify factual claims automatically.</p>
+          <label>Generation engine<select value={generationMode} onChange={(e) => { const mode = e.target.value; setGenerationMode(mode); if (mode === "ai" && Number(form.count) > 10) update("count", "10"); }}><option value="local">Local pattern engine · no API</option><option value="ai">AI-assisted · Gemini free tier</option></select></label>
+          {generationMode === "ai" && <div className="ai-config"><div className="ai-status"><span className={aiServiceStatus.configured ? "ai-dot online" : "ai-dot"} />{aiServiceStatus.checking ? "Checking AI service…" : aiServiceStatus.configured ? "Server connected · " + aiServiceStatus.provider + " · " + aiServiceStatus.model : "Server setup required before AI generation"}</div><label>AI access code<input type="password" autoComplete="off" value={aiAccessCode} onChange={(e) => setAiAccessCode(e.target.value)} placeholder="Enter the server access code" /></label><a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">Get a Gemini API key ↗</a><p>Ask the server owner to configure GEMINI_API_KEY and CONTENT_ENGINE_ACCESS_TOKEN in server environment settings. The API key stays on the server; this access code is held only in this page memory and is not saved to browser storage.</p><p>AI requests are capped at 10 drafts each. Free-tier quotas vary by project and model. Do not submit private customer or personal information.</p></div>}
+          <div className="batch-row"><label>Drafts in this batch<input type="number" min="1" max={generationMode === "ai" ? 10 : 5000} value={form.count} onChange={(e) => update("count", e.target.value)} /></label><span>{generationMode === "ai" ? "Maximum 10 per AI request" : "Maximum 5,000 per local run"}</span></div>
+          <button className="primary-button" type="submit" disabled={generating}>{generating ? "Generating…" : generationMode === "ai" ? "Generate with Gemini" : "Generate original drafts"} <span>↗</span></button>
+          <p className="fine-print">All generated drafts are checked by the existing local quality engine. These checks do not fact-check claims. AI mode does not copy creator posts or imitate distinctive voices.</p>
         </form>
 
         <aside className="frameworks panel">
