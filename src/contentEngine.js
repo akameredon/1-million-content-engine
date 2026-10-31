@@ -1,4 +1,5 @@
 import { researchPatterns } from './researchLibrary.js';
+import { composeContentDNA } from './contentDNA.js';
 
 export const creatorFrameworks = researchPatterns.map((pattern) => ({
   id: pattern.id,
@@ -101,7 +102,9 @@ export function generatePosts({ topic, idea, audience = "creators and business o
     const lesson = lessons[Math.floor(variant / hooks.length) % lessons.length](cleanIdea);
     const ending = endings[Math.floor(variant / (hooks.length * lessons.length)) % endings.length];
     const angle = angles[Math.floor(variant / (hooks.length * lessons.length * endings.length)) % angles.length];
-    const text = buildPatternText(pattern.id, { topic: cleanTopic, idea: cleanIdea, audience: cleanAudience, hook, angle, lesson, ending });
+    const dna = composeContentDNA({ topic: cleanTopic, idea: cleanIdea, audience: cleanAudience, index: cursor, seed });
+    const dnaText = [dna.lines[0], dna.lines[2], dna.lines[4], dna.lines[6]].join(' ');
+    const text = `${buildPatternText(pattern.id, { topic: cleanTopic, idea: cleanIdea, audience: cleanAudience, hook, angle, lesson, ending })} ${dnaText}`;
     const key = text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
     if (!seen.has(key)) {
       seen.add(key);
@@ -114,6 +117,9 @@ export function generatePosts({ topic, idea, audience = "creators and business o
         patternId: pattern.id,
         mechanics: pattern.mechanics,
         sourceIds: pattern.sourceIds,
+        dnaSignature: dna.signature,
+        dnaComponents: dna.components,
+        dnaLabels: Object.values(dna.components).map((component) => component.label),
         status: "draft",
       });
     }
@@ -143,7 +149,7 @@ export function assessPosts(posts) {
 export function toCsv(posts) {
   const quote = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
   return [
-    "text,category,audience,framework,pattern_id,source_ids,status,quality,issues",
-    ...posts.map((post) => [post.text, post.category, post.audience, post.framework, post.patternId, (post.sourceIds || []).join("; "), post.status, post.quality, (post.issues || []).join("; ")].map(quote).join(",")),
+    "text,category,audience,framework,pattern_id,source_ids,dna_signature,dna_components,status,quality,issues",
+    ...posts.map((post) => [post.text, post.category, post.audience, post.framework, post.patternId, (post.sourceIds || []).join("; "), post.dnaSignature, JSON.stringify(post.dnaComponents || {}), post.status, post.quality, (post.issues || []).join("; ")].map(quote).join(",")),
   ].join("\n");
 }
