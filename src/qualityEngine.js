@@ -3,7 +3,7 @@ const STOP_WORDS = new Set([
 ]);
 
 const MISLEADING = [
-  { code: "guaranteed-outcome", label: "Guarantee or certainty claim", pattern: /\b(guaranteed?|risk[- ]free|no risk|100\s?%\s?(certain|guaranteed)|cannot lose|get rich quick|instant wealth|double your money|beat the market)\b/i, severity: "critical", penalty: 50 },
+  { code: "guaranteed-outcome", label: "Potentially misleading claim", pattern: /\b(guaranteed?|risk[- ]free|no risk|100\s?%\s?(certain|guaranteed)|cannot lose|get rich quick|instant wealth|double your money|beat the market)\b/i, severity: "critical", penalty: 50 },
   { code: "time-bound-wealth", label: "Unsubstantiated rapid-wealth promise", pattern: /\b(make|earn|get)\s+(\$|₦|\d)[\w\s,.-]{0,30}\b(in|within)\s+\d+\s+(days?|weeks?|months?)\b/i, severity: "critical", penalty: 45 },
 ];
 
