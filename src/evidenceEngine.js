@@ -8,7 +8,7 @@ export function createEvidenceRecord({ claim, url, title, publisher = "", publis
   if (!cleanTitle) throw new Error("Add the source title so the reference can be identified.");
   let parsed;
   try { parsed = new URL(cleanUrl); } catch { throw new Error("Enter a valid http or https source URL."); }
-  if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("Only http or https source URLs are allowed.");
+  if (!["http:", "https:"].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error("Only public http or https source URLs without embedded credentials are allowed.");
   return {
     claim: cleanClaim,
     url: parsed.href,
@@ -43,7 +43,7 @@ export function getEvidenceReadiness(post) {
 
 export function isSensitiveFinancePost(post) {
   return /finance|investment|money|business/i.test(String(post?.category || "")) ||
-    /\\b(invest(?:ment|ing)?|stock market|shares|crypto|bitcoin|forex|trading|portfolio|dividend|loan|credit score|tax|retirement|mutual fund|etf|bond|yield|capital gains)\\b/i.test(String(post?.text || ""));
+    /\b(invest(?:ment|ing)?|stock market|shares|crypto|bitcoin|forex|trading|portfolio|dividend|loan|credit score|tax|retirement|mutual fund|etf|bond|yield|capital gains)\b/i.test(String(post?.text || ""));
 }
 
 export function getPublicationReadiness(post) {
