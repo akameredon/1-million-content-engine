@@ -5,6 +5,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 import { assessPosts, generatePosts, toCsv } from '../src/contentEngine.js';
+import { composeContentDNA, contentDnaDimensions, scoreDiversity } from '../src/contentDNA.js';
 import { creatorProfiles, researchPatterns, researchSources } from '../src/researchLibrary.js';
 
 const root = new URL('../', import.meta.url);
@@ -90,4 +91,32 @@ test('auto mode mixes source-backed patterns and CSV retains pattern provenance'
   const csv = toCsv(posts);
   assert.match(csv, /pattern_id,source_ids/);
   assert.match(csv, /neil-guide/);
+});
+
+
+test('content DNA exposes seven reusable dimensions and deterministic combinations', () => {
+  assert.deepEqual(Object.keys(contentDnaDimensions), ['hook', 'audienceLens', 'teaching', 'proof', 'story', 'objection', 'callToAction']);
+  const first = composeContentDNA({ topic: 'marketing', idea: 'understand customer needs', audience: 'new founders', index: 14, seed: 9 });
+  const repeat = composeContentDNA({ topic: 'marketing', idea: 'understand customer needs', audience: 'new founders', index: 14, seed: 9 });
+  assert.equal(first.signature, repeat.signature);
+  assert.equal(first.text, repeat.text);
+  assert.equal(Object.keys(first.components).length, 7);
+});
+
+test('recombination varies DNA signatures and records the assembly on each draft', () => {
+  const posts = generatePosts({ topic: 'business finance', idea: 'track cash flow and review decisions', count: 80, seed: 4 });
+  assert.ok(posts.every((post) => post.dnaSignature && Object.keys(post.dnaComponents).length === 7));
+  assert.ok(new Set(posts.map((post) => post.dnaSignature)).size > 1);
+  const diversity = scoreDiversity(posts);
+  assert.equal(diversity.total, posts.length);
+  assert.ok(diversity.score > 0);
+  assert.equal(diversity.repeated, posts.length - diversity.uniqueSignatures);
+});
+
+test('DNA metadata is preserved in CSV and duplicate signatures are measurable', () => {
+  const posts = generatePosts({ topic: 'marketing', idea: 'test a clear offer', count: 12 });
+  const csv = toCsv(posts);
+  assert.match(csv, /dna_signature,dna_components/);
+  assert.match(csv, /misconception|question|contrast|beginner|observation|myth/);
+  assert.deepEqual(scoreDiversity([]), { score: 0, uniqueSignatures: 0, total: 0, repeated: 0 });
 });
