@@ -1,5 +1,7 @@
 import { researchPatterns } from './researchLibrary.js';
 import { composeContentDNA } from './contentDNA.js';
+import { assessPosts } from './qualityEngine.js';
+export { assessPosts } from './qualityEngine.js';
 
 export const creatorFrameworks = researchPatterns.map((pattern) => ({
   id: pattern.id,
@@ -61,27 +63,10 @@ export function generatePosts({ topic, idea, audience = "creators and business o
   return posts;
 }
 
-export function assessPosts(posts) {
-  const seen = new Set();
-  return posts.map((post) => {
-    const text = String(post.text || "").trim();
-    const key = text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-    const duplicate = seen.has(key);
-    seen.add(key);
-    const issues = [];
-    if (text.length < 45) issues.push("Very short");
-    if (text.length > 500) issues.push("Long for a short post");
-    if (/\b(guaranteed|risk[- ]free|100% certain|get rich quick)\b/i.test(text)) issues.push("Potentially misleading claim");
-    if (/\$\s?\d|₦\s?\d|\b\d+(?:\.\d+)?%/.test(text)) issues.push("Check factual evidence");
-    if (duplicate) issues.push("Duplicate");
-    return { ...post, quality: issues.length ? "review" : "ready", issues };
-  });
-}
-
 export function toCsv(posts) {
   const quote = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
   return [
-    "text,category,audience,framework,pattern_id,source_ids,dna_signature,dna_components,status,quality,issues",
-    ...posts.map((post) => [post.text, post.category, post.audience, post.framework, post.patternId, (post.sourceIds || []).join("; "), post.dnaSignature, JSON.stringify(post.dnaComponents || {}), post.status, post.quality, (post.issues || []).join("; ")].map(quote).join(",")),
+    "text,category,audience,framework,pattern_id,source_ids,dna_signature,dna_components,status,quality,quality_score,quality_flags,duplicate_of,similarity_to_previous,issues",
+    ...posts.map((post) => [post.text, post.category, post.audience, post.framework, post.patternId, (post.sourceIds || []).join("; "), post.dnaSignature, JSON.stringify(post.dnaComponents || {}), post.status, post.quality, post.qualityScore, JSON.stringify(post.qualityFlags || []), post.duplicateOf, post.similarityToPrevious, (post.issues || []).join("; ")].map(quote).join(",")),
   ].join("\n");
 }
