@@ -78,7 +78,11 @@ export function assessPosts(posts, options = {}) {
       for (const gram of terms) {
         const matches = indexed.get(gram);
         if (!matches || matches.length > 120) continue;
-        for (const candidateIndex of matches) candidates.add(candidateIndex);
+        for (const candidateIndex of matches) {
+          candidates.add(candidateIndex);
+          if (candidates.size >= 200) break;
+        }
+        if (candidates.size >= 200) break;
       }
       let bestSimilarity = 0;
       for (const candidateIndex of candidates) {
