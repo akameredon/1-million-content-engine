@@ -248,8 +248,8 @@ test('AI endpoint sends the Gemini key in a header and returns validated draft m
   globalThis.fetch = async (url, options) => {
     captured = { url: String(url), options };
     return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify({ posts: [
-      { text: 'A useful short lesson about testing a marketing message with one clear audience and one measurable next step.', angle: 'Small experiment' },
-      { text: 'Before changing every channel, find the customer problem your offer actually solves and explain it plainly.', angle: 'Customer clarity' },
+      { text: 'A useful short lesson about testing a marketing message with one clear audience and one measurable next step.', angle: 'Small experiment', patternId: 'problem-to-process' },
+      { text: 'Before changing every channel, find the customer problem your offer actually solves and explain it plainly.', angle: 'Customer clarity', patternId: 'audience-intent-guide' },
     ] }) }] } }] }) };
   };
   try {
