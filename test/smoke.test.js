@@ -5,6 +5,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 import { assessPosts, generatePosts, toCsv } from '../src/contentEngine.js';
+import { creatorProfiles, researchPatterns, researchSources } from '../src/researchLibrary.js';
 
 const root = new URL('../', import.meta.url);
 
@@ -64,4 +65,29 @@ test('the React app renders the actual content generation workflow', async () =>
     assert.match(html, /Communication frameworks/);
     assert.match(html, /Export CSV/);
   } finally { await server.close(); }
+});
+
+test('creator intelligence records cite public sources and disclose research limits', () => {
+  assert.equal(creatorProfiles.length, 5);
+  assert.equal(researchPatterns.length, 5);
+  assert.equal(researchSources.length, 5);
+  const sourceIds = new Set(researchSources.map((source) => source.id));
+  assert.ok(creatorProfiles.every((creator) => sourceIds.has(creator.sourceId) && creator.limitation));
+  assert.ok(researchPatterns.every((pattern) => pattern.sourceIds.length > 0 && pattern.mechanics.length >= 3));
+});
+
+test('generator applies a selected research pattern and preserves source traceability', () => {
+  const posts = generatePosts({ topic: 'customer acquisition', idea: 'test one channel and measure qualified leads', audience: 'new founders', patternId: 'evidence-first-teacher', count: 12 });
+  assert.equal(posts.length, 12);
+  assert.ok(posts.every((post) => post.patternId === 'evidence-first-teacher'));
+  assert.ok(posts.every((post) => post.sourceIds.includes('ben-investing101')));
+  assert.ok(posts[0].text.includes('evidence'));
+});
+
+test('auto mode mixes source-backed patterns and CSV retains pattern provenance', () => {
+  const posts = generatePosts({ topic: 'marketing strategy', idea: 'understand the audience before choosing channels', count: 50 });
+  assert.ok(new Set(posts.map((post) => post.patternId)).size > 1);
+  const csv = toCsv(posts);
+  assert.match(csv, /pattern_id,source_ids/);
+  assert.match(csv, /neil-guide/);
 });
