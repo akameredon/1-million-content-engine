@@ -8,6 +8,7 @@ import { assessPosts, generatePosts, toCsv } from '../src/contentEngine.js';
 import { composeContentDNA, contentDnaDimensions, scoreDiversity } from '../src/contentDNA.js';
 import { assessPosts as assessQuality, summarizeQuality } from '../src/qualityEngine.js';
 import { creatorProfiles, researchPatterns, researchSources } from '../src/researchLibrary.js';
+import { createEvidenceRecord, getEvidenceReadiness, getPublicationReadiness, reviewEvidence } from '../src/evidenceEngine.js';
 
 const root = new URL('../', import.meta.url);
 
@@ -164,4 +165,38 @@ test('CSV includes quality scores, structured flags and duplicate references', (
   const csv = toCsv(checked);
   assert.match(csv, /quality_score,quality_flags,duplicate_of,similarity_to_previous/);
   assert.match(csv, /100/);
+});
+
+
+test('evidence records require a claim, title and safe http(s) URL', () => {
+  assert.throws(() => createEvidenceRecord({ claim: 'A claim', title: 'Source', url: 'javascript:alert(1)' }), /http or https/);
+  assert.throws(() => createEvidenceRecord({ title: 'Source', url: 'https://example.com' }), /specific claim/);
+  const record = createEvidenceRecord({ claim: 'The report states this result.', title: 'Official report', url: 'https://example.com/report', publisher: 'Example agency', excerpt: 'Relevant passage' });
+  assert.equal(record.status, 'provided');
+  assert.equal(record.url, 'https://example.com/report');
+});
+
+test('a supplied URL never becomes human-verified without an explicit review decision', () => {
+  const record = createEvidenceRecord({ claim: 'Revenue increased in the period.', title: 'Annual report', url: 'https://example.com/report' });
+  const post = { category: 'Finance', text: 'An investment discussion with a factual statement.', evidence: record };
+  assert.equal(getEvidenceReadiness(post).status, 'provided');
+  assert.equal(getPublicationReadiness(post).canPublish, false);
+  const reviewed = reviewEvidence(record, 'human-verified', 'Checked the cited page and relevant table.');
+  assert.equal(getEvidenceReadiness({ evidence: reviewed }).status, 'human-verified');
+  assert.equal(getPublicationReadiness({ ...post, evidence: reviewed }).canPublish, true);
+});
+
+test('finance drafts remain blocked when evidence is missing or rejected', () => {
+  const financePost = { category: 'Finance', text: 'A beginner guide to investing.' };
+  assert.equal(getPublicationReadiness(financePost).canPublish, false);
+  const rejected = reviewEvidence(createEvidenceRecord({ claim: 'Unsupported claim.', title: 'Weak source', url: 'https://example.com' }), 'rejected', 'The page does not support this claim.');
+  assert.equal(getPublicationReadiness({ ...financePost, evidence: rejected }).canPublish, false);
+});
+
+test('marketing numeric claims are evidence-gated and CSV preserves review trace', () => {
+  const post = { category: 'Marketing', text: 'This campaign produced 25% growth for every customer.', qualityFlags: [{ code: 'numeric-claim-needs-source' }] };
+  assert.equal(getPublicationReadiness(post).canPublish, false);
+  const csv = toCsv([{ ...post, evidence: createEvidenceRecord({ claim: 'This campaign produced 25% growth.', title: 'Case study', url: 'https://example.com/case' }) }]);
+  assert.match(csv, /evidence_claim,evidence_url,evidence_title/);
+  assert.match(csv, /provided/);
 });

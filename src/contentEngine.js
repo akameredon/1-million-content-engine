@@ -1,6 +1,7 @@
 import { researchPatterns } from './researchLibrary.js';
 import { composeContentDNA } from './contentDNA.js';
 import { assessPosts } from './qualityEngine.js';
+import { getPublicationReadiness } from './evidenceEngine.js';
 export { assessPosts } from './qualityEngine.js';
 
 export const creatorFrameworks = researchPatterns.map((pattern) => ({
@@ -66,7 +67,7 @@ export function generatePosts({ topic, idea, audience = "creators and business o
 export function toCsv(posts) {
   const quote = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
   return [
-    "text,category,audience,framework,pattern_id,source_ids,dna_signature,dna_components,status,quality,quality_score,quality_flags,duplicate_of,similarity_to_previous,issues",
-    ...posts.map((post) => [post.text, post.category, post.audience, post.framework, post.patternId, (post.sourceIds || []).join("; "), post.dnaSignature, JSON.stringify(post.dnaComponents || {}), post.status, post.quality, post.qualityScore, JSON.stringify(post.qualityFlags || []), post.duplicateOf, post.similarityToPrevious, (post.issues || []).join("; ")].map(quote).join(",")),
+    "text,category,audience,framework,pattern_id,source_ids,dna_signature,dna_components,status,quality,quality_score,quality_flags,duplicate_of,similarity_to_previous,issues,evidence_claim,evidence_url,evidence_title,evidence_publisher,evidence_date,evidence_status,evidence_reviewed_at,publication_ready,publication_reason",
+    ...posts.map((post) => [post.text, post.category, post.audience, post.framework, post.patternId, (post.sourceIds || []).join("; "), post.dnaSignature, JSON.stringify(post.dnaComponents || {}), post.status, post.quality, post.qualityScore, JSON.stringify(post.qualityFlags || []), post.duplicateOf, post.similarityToPrevious, (post.issues || []).join("; "), post.evidence?.claim, post.evidence?.url, post.evidence?.title, post.evidence?.publisher, post.evidence?.publishedAt, post.evidence?.status, post.evidence?.reviewedAt, getPublicationReadiness(post).canPublish, getPublicationReadiness(post).reason].map(quote).join(",")),
   ].join("\n");
 }
