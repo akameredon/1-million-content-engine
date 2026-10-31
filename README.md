@@ -8,12 +8,15 @@ A free-first, mobile-ready workspace for turning a topic and core idea into batc
 - Browse an initial research library covering five public creator sources across finance and marketing.
 - Filter creator research by category or search by creator, topic, or technique.
 - Select a research-derived pattern or auto-mix all five when generating drafts.
+- Recombine seven content DNA dimensions: hook, audience lens, teaching structure, evidence approach, story device, objection handling, and call to action.
+- Attach a deterministic DNA signature and component trace to every draft; report the percentage of unique signatures in the current library.
+- Export DNA signatures and component metadata alongside research provenance in CSV.
 - Preserve pattern IDs and source IDs in each draft and in CSV exports.
 - Run basic quality checks for length, duplicates, and claims that need evidence.
 - Keep drafts in browser storage, copy individual posts, and export the complete library as CSV.
 - Filter drafts that pass basic checks from drafts needing review.
 
-**Important:** The research library is a small, manually curated starter set based on public official creator pages, articles, and episode notes. It is not a comprehensive audit of their channels, does not measure why their content succeeds, and does not claim that a pattern caused growth. It does not scrape posts, copy scripts, train on creator accounts, or imitate distinctive voices. The generator is still a local rule-based engine, not an external AI model. "Ready" means only that basic automated checks found no flagged issue; it is not fact-checking or editorial approval.
+**Important:** The research library is a small, manually curated starter set based on public official creator pages, articles, and episode notes. It is not a comprehensive audit of their channels, does not measure why their content succeeds, and does not claim that a pattern caused growth. It does not scrape posts, copy scripts, train on creator accounts, or imitate distinctive voices. The generator is still a local rule-based recombination engine, not an external AI model. DNA variety is a structural diversity signal, not a guarantee that every post is factually correct, meaningfully distinct to a human reader, or ready to publish. "Ready" means only that basic automated checks found no flagged issue; it is not fact-checking or editorial approval.
 
 ## Run locally
 
