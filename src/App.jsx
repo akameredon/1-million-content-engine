@@ -4,6 +4,8 @@ import { scoreDiversity } from './contentDNA.js';
 import { creatorProfiles, researchSources } from './researchLibrary.js';
 import { summarizeQuality } from './qualityEngine.js';
 import { createEvidenceRecord, getPublicationReadiness, reviewEvidence } from './evidenceEngine.js';
+import { buildExternalPrompt, parseExternalAiResponse } from './externalAi.js';
+import './externalAi.css';
 
 const STORAGE_KEY = 'million-content-engine-v1';
 const initial = { topic: 'building a profitable business', idea: 'consistent execution and customer feedback', audience: 'global creators and business owners', category: 'Marketing', count: 20, patternId: 'auto' };
@@ -16,6 +18,10 @@ export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [researchCategory, setResearchCategory] = useState('All');
   const [researchQuery, setResearchQuery] = useState('');
+  const [generationMode, setGenerationMode] = useState('external');
+  const [externalPrompt, setExternalPrompt] = useState('');
+  const [externalResponse, setExternalResponse] = useState('');
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     try {
@@ -37,12 +43,37 @@ export default function App() {
   const visibleCreators = useMemo(() => creatorProfiles.filter((creator) => (researchCategory === 'All' || creator.category === researchCategory) && [creator.name, creator.channel, creator.observation, creator.principle].join(' ').toLowerCase().includes(researchQuery.toLowerCase())), [researchCategory, researchQuery]);
 
   function update(field, value) { setForm((current) => ({ ...current, [field]: value })); }
-  function generate(event) {
+  async function generate(event) {
     event.preventDefault();
+    if (generating) return;
+    setGenerating(true);
     try {
+      if (generationMode === 'external') {
+        setExternalPrompt(buildExternalPrompt(form));
+        setExternalResponse('');
+        setNotice('Gemini prompt prepared. Copy it, open Gemini, then paste Gemini’s JSON response below.');
+        return;
+      }
       const batch = assessPosts(generatePosts(form));
       setPosts((current) => [...batch, ...current].slice(0, 10000));
-      setNotice(`Generated ${batch.length.toLocaleString()} drafts. Review before publishing.`);
+      setNotice('Generated ' + batch.length.toLocaleString() + ' local drafts. Automated checks are not fact-checking; review before use.');
+    } catch (error) { setNotice(error.message); }
+    finally { setGenerating(false); }
+  }
+  async function copyExternalPrompt() {
+    if (!externalPrompt) return;
+    try {
+      await navigator.clipboard.writeText(externalPrompt);
+      setNotice('Prompt copied. Open Gemini and paste it into a new chat.');
+    } catch { setNotice('Copy was blocked by this browser. Select the prompt text and copy it manually.'); }
+  }
+  function importExternalDrafts() {
+    try {
+      const imported = parseExternalAiResponse(externalResponse, form);
+      const batch = assessPosts(imported);
+      setPosts((current) => [...batch, ...current].slice(0, 10000));
+      setExternalResponse('');
+      setNotice('Imported ' + batch.length.toLocaleString() + ' AI-assisted drafts. Local quality checks ran; claims are not fact-checked. Review before use.');
     } catch (error) { setNotice(error.message); }
   }
   function exportCsv() {
@@ -99,9 +130,11 @@ export default function App() {
           <label>Core lesson or idea<textarea value={form.idea} onChange={(e) => update('idea', e.target.value)} rows="3" placeholder="What should the audience learn?" required /></label>
           <label>Who is this for?<input value={form.audience} onChange={(e) => update('audience', e.target.value)} placeholder="e.g. first-time founders" /></label>
           <label>Research pattern<select value={form.patternId} onChange={(e) => update('patternId', e.target.value)}><option value="auto">Auto-mix all 5 patterns</option>{creatorFrameworks.map((pattern) => <option key={pattern.id} value={pattern.id}>{pattern.name}</option>)}</select></label>
-          <div className="batch-row"><label>Drafts in this batch<input type="number" min="1" max="5000" value={form.count} onChange={(e) => update('count', e.target.value)} /></label><span>Maximum 5,000 per run</span></div>
-          <button className="primary-button" type="submit">Generate original drafts <span>↗</span></button>
-          <p className="fine-print">Uses generalized patterns and local checks. It does not scrape creators, imitate their voices, or verify factual claims automatically.</p>
+          <label>Generation engine<select value={generationMode} onChange={(e) => { const mode = e.target.value; setGenerationMode(mode); if (mode === 'external' && Number(form.count) > 10) update('count', 10); }}><option value="external">Gemini-assisted · no API key or setup</option><option value="local">Local pattern engine · no AI service</option></select></label>
+          <div className="batch-row"><label>Drafts in this batch<input type="number" min="1" max={generationMode === 'external' ? 10 : 5000} value={form.count} onChange={(e) => update('count', e.target.value)} /></label><span>{generationMode === 'external' ? 'Maximum 10 per Gemini prompt' : 'Maximum 5,000 per local run'}</span></div>
+          <button className="primary-button" type="submit" disabled={generating}>{generating ? 'Preparing…' : generationMode === 'external' ? 'Prepare Gemini prompt' : 'Generate original drafts'} <span>↗</span></button>
+          {generationMode === 'external' && <div className="external-ai-workflow"><h3>Gemini without API setup</h3><p>Prepare a prompt here, run it in the Gemini website, then bring the JSON response back. No API key, server configuration, or subscription is needed for this manual workflow.</p>{externalPrompt && <><label>Ready-to-copy prompt<textarea readOnly value={externalPrompt} onFocus={(e) => e.target.select()} /></label><div className="external-ai-actions"><button type="button" onClick={copyExternalPrompt}>Copy prompt</button><a href="https://gemini.google.com/app" target="_blank" rel="noreferrer">Open Gemini ↗</a></div><label>Paste Gemini’s complete JSON response<textarea className="response-box" value={externalResponse} onChange={(e) => setExternalResponse(e.target.value)} placeholder='Paste the JSON response containing a "posts" array here.' /></label><div className="external-ai-actions"><button className="import-button" type="button" onClick={importExternalDrafts} disabled={!externalResponse.trim()}>Import and quality-check drafts</button></div></>}</div>}
+          <p className="fine-print">AI-assisted drafts are generated in Gemini and imported here. All imported drafts pass through the existing local quality engine. These checks do not fact-check claims. Do not copy creator posts or imitate distinctive voices.</p>
         </form>
 
         <aside className="frameworks panel">
