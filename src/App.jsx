@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { assessPosts, creatorFrameworks, generatePosts, toCsv } from './contentEngine.js';
+import { scoreDiversity } from './contentDNA.js';
 import { creatorProfiles, researchSources } from './researchLibrary.js';
+import { summarizeQuality } from './qualityEngine.js';
 
 const STORAGE_KEY = 'million-content-engine-v1';
 const initial = { topic: 'building a profitable business', idea: 'consistent execution and customer feedback', audience: 'global creators and business owners', category: 'Marketing', count: 20, patternId: 'auto' };
@@ -29,6 +31,7 @@ export default function App() {
   }, [posts, loaded]);
 
   const readyCount = posts.filter((p) => p.quality === 'ready').length;
+  const qualitySummary = summarizeQuality(posts);
   const visiblePosts = useMemo(() => filter === 'all' ? posts : posts.filter((p) => p.quality === filter), [posts, filter]);
   const visibleCreators = useMemo(() => creatorProfiles.filter((creator) => (researchCategory === 'All' || creator.category === researchCategory) && [creator.name, creator.channel, creator.observation, creator.principle].join(' ').toLowerCase().includes(researchQuery.toLowerCase())), [researchCategory, researchQuery]);
 
@@ -65,7 +68,7 @@ export default function App() {
         <p className="eyebrow">RESEARCH THE MECHANICS · CREATE ORIGINAL IDEAS</p>
         <h1>One idea.<br /><em>Thousands of angles.</em></h1>
         <p className="hero-copy">Build a repeatable content system for finance and marketing. Combine proven communication frameworks into fresh drafts, check quality, and keep your publishing decisions in your hands.</p>
-        <div className="hero-stats"><div><strong>5</strong><span>starter frameworks</span></div><div><strong>5,000</strong><span>drafts per batch max</span></div><div><strong>0</strong><span>paid APIs required</span></div></div>
+        <div className="hero-stats"><div><strong>5</strong><span>starter frameworks</span></div><div><strong>5,000</strong><span>drafts per batch max</span></div><div><strong>7</strong><span>DNA dimensions</span></div></div>
       </section>
 
       <section className="workspace">
@@ -78,7 +81,7 @@ export default function App() {
           <label>Research pattern<select value={form.patternId} onChange={(e) => update('patternId', e.target.value)}><option value="auto">Auto-mix all 5 patterns</option>{creatorFrameworks.map((pattern) => <option key={pattern.id} value={pattern.id}>{pattern.name}</option>)}</select></label>
           <div className="batch-row"><label>Drafts in this batch<input type="number" min="1" max="5000" value={form.count} onChange={(e) => update('count', e.target.value)} /></label><span>Maximum 5,000 per run</span></div>
           <button className="primary-button" type="submit">Generate original drafts <span>↗</span></button>
-          <p className="fine-print">Uses sourced, generalized patterns. It does not scrape creators, imitate their voices, or call an external AI model.</p>
+          <p className="fine-print">Uses generalized patterns and local checks. It does not scrape creators, imitate their voices, or verify factual claims automatically.</p>
         </form>
 
         <aside className="frameworks panel">
@@ -100,9 +103,9 @@ export default function App() {
 
       <section className="results panel">
         <div className="results-heading"><div><p className="eyebrow">04 / DRAFT LIBRARY</p><h2>Your content inventory</h2><p className="muted" aria-live="polite">{notice}</p></div><button className="secondary-button" onClick={exportCsv} disabled={!posts.length}>Export CSV ↓</button></div>
-        <div className="metrics"><div><strong>{posts.length.toLocaleString()}</strong><span>Total drafts</span></div><div><strong>{readyCount.toLocaleString()}</strong><span>Passed basic checks</span></div><div><strong>{(posts.length-readyCount).toLocaleString()}</strong><span>Need review</span></div></div>
+        <div className="metrics"><div><strong>{posts.length.toLocaleString()}</strong><span>Total drafts</span></div><div><strong>{readyCount.toLocaleString()}</strong><span>Passed automated checks only</span></div><div><strong>{(posts.length-readyCount).toLocaleString()}</strong><span>Need review</span></div><div><strong>{scoreDiversity(posts).score}%</strong><span>Unique DNA signatures</span></div><div><strong>{qualitySummary.averageScore}</strong><span>Average quality score / 100</span></div><div><strong>{qualitySummary.nearDuplicates}</strong><span>Similar or duplicate drafts</span></div></div>
         <div className="filter-row"><div className="filter-tabs" aria-label="Filter drafts"><button type="button" className={filter==='all'?'active':''} onClick={()=>setFilter('all')}>All</button><button type="button" className={filter==='ready'?'active':''} onClick={()=>setFilter('ready')}>Ready</button><button type="button" className={filter==='review'?'active':''} onClick={()=>setFilter('review')}>Review</button></div><button className="text-button" type="button" onClick={()=>{setPosts([]);setNotice('Draft library cleared from this browser.');}}>Clear drafts</button></div>
-        {!visiblePosts.length ? <div className="empty-state"><span>✳</span><h3>No drafts yet</h3><p>Enter a topic and core idea above to generate your first batch.</p></div> : <div className="post-list">{visiblePosts.slice(0,100).map((post) => <article className="post-card" key={post.id + post.text}><div className="post-meta"><span>{post.category}</span><span>{post.framework}</span><span className={post.quality==='ready'?'quality-ready':'quality-review'}>{post.quality==='ready'?'Basic checks passed':'Review needed'}</span></div><p>{post.text}</p>{post.issues?.length>0 && <small>{post.issues.join(' · ')}</small>}{post.sourceIds?.length>0 && <small className="post-source">Research source IDs: {post.sourceIds.join(', ')}</small>}<div className="post-actions"><button type="button" onClick={()=>copyPost(post.text)}>Copy post</button></div></article>)}</div>}
+        {!visiblePosts.length ? <div className="empty-state"><span>✳</span><h3>No drafts yet</h3><p>Enter a topic and core idea above to generate your first batch.</p></div> : <div className="post-list">{visiblePosts.slice(0,100).map((post) => <article className="post-card" key={post.id + post.text}><div className="post-meta"><span>{post.category}</span><span>{post.framework}</span><span className={post.quality==='ready'?'quality-ready':'quality-review'}>{post.quality==='ready'?'Checks passed · not fact-checked':'Review before use'}</span></div><p>{post.text}</p>{post.qualityScore !== undefined && <small className="post-source">Quality score: {post.qualityScore}/100{post.duplicateOf ? ` · Similar to ${post.duplicateOf}` : ''}</small>}{post.issues?.length>0 && <small>{post.issues.join(' · ')}</small>}{post.dnaLabels?.length>0 && <small className="post-source">Content DNA: {post.dnaLabels.join(' · ')}</small>}{post.sourceIds?.length>0 && <small className="post-source">Research source IDs: {post.sourceIds.join(', ')}</small>}<div className="post-actions"><button type="button" onClick={()=>copyPost(post.text)}>Copy post</button></div></article>)}</div>}
         {visiblePosts.length>100 && <p className="muted">Showing first 100 drafts. Export CSV for the full inventory.</p>}
       </section>
 

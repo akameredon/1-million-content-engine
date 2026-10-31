@@ -8,12 +8,16 @@ A free-first, mobile-ready workspace for turning a topic and core idea into batc
 - Browse an initial research library covering five public creator sources across finance and marketing.
 - Filter creator research by category or search by creator, topic, or technique.
 - Select a research-derived pattern or auto-mix all five when generating drafts.
+- Recombine seven content DNA dimensions: hook, audience lens, teaching structure, evidence approach, story device, objection handling, and call to action.
+- Attach a deterministic DNA signature and component trace to every draft; report the percentage of unique signatures in the current library.
+- Export DNA signatures and component metadata alongside research provenance in CSV.
 - Preserve pattern IDs and source IDs in each draft and in CSV exports.
-- Run basic quality checks for length, duplicates, and claims that need evidence.
+- Score drafts from 0–100 using transparent local heuristics for length, exact/near-duplicates, risky promises, financial instructions, and claims needing evidence.
+- Preserve structured quality flags, similarity references, and review scores in CSV; show the average score and duplicate counts in the workspace.
 - Keep drafts in browser storage, copy individual posts, and export the complete library as CSV.
 - Filter drafts that pass basic checks from drafts needing review.
 
-**Important:** The research library is a small, manually curated starter set based on public official creator pages, articles, and episode notes. It is not a comprehensive audit of their channels, does not measure why their content succeeds, and does not claim that a pattern caused growth. It does not scrape posts, copy scripts, train on creator accounts, or imitate distinctive voices. The generator is still a local rule-based engine, not an external AI model. "Ready" means only that basic automated checks found no flagged issue; it is not fact-checking or editorial approval.
+**Important:** The research library is a small, manually curated starter set based on public official creator pages, articles, and episode notes. It is not a comprehensive audit of their channels, does not measure why their content succeeds, and does not claim that a pattern caused growth. It does not scrape posts, copy scripts, train on creator accounts, or imitate distinctive voices. The generator is still a local rule-based recombination engine, not an external AI model. DNA variety is a structural diversity signal, not a guarantee that every post is factually correct, meaningfully distinct to a human reader, or ready to publish. "Ready" means only that these local heuristics found no flagged issue; it is not source verification, semantic originality certification, financial/legal review, or editorial approval. Similarity detection is approximate and uses bounded candidate comparisons to keep large batches responsive. The engine cannot verify whether a cited source actually supports a claim.
 
 ## Run locally
 
@@ -36,7 +40,7 @@ The long-term goal is to generate a large content inventory, including potential
 
 1. Expand creator coverage with dated samples, transcript-level observations, and independent human review.
 2. Add optional AI provider adapters behind explicit configuration; no paid provider is assumed.
-3. Improve originality, duplicate detection, and evidence checks.
+3. Add source retrieval and claim-to-source verification; current evidence flags are heuristic prompts, not fact checks.
 4. Add review queues and content calendar.
 5. Implement official platform adapters only after permissions and rate limits are verified.
 

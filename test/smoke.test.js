@@ -5,6 +5,8 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 import { assessPosts, generatePosts, toCsv } from '../src/contentEngine.js';
+import { composeContentDNA, contentDnaDimensions, scoreDiversity } from '../src/contentDNA.js';
+import { assessPosts as assessQuality, summarizeQuality } from '../src/qualityEngine.js';
 import { creatorProfiles, researchPatterns, researchSources } from '../src/researchLibrary.js';
 
 const root = new URL('../', import.meta.url);
@@ -90,4 +92,76 @@ test('auto mode mixes source-backed patterns and CSV retains pattern provenance'
   const csv = toCsv(posts);
   assert.match(csv, /pattern_id,source_ids/);
   assert.match(csv, /neil-guide/);
+});
+
+
+test('content DNA exposes seven reusable dimensions and deterministic combinations', () => {
+  assert.deepEqual(Object.keys(contentDnaDimensions), ['hook', 'audienceLens', 'teaching', 'proof', 'story', 'objection', 'callToAction']);
+  const first = composeContentDNA({ topic: 'marketing', idea: 'understand customer needs', audience: 'new founders', index: 14, seed: 9 });
+  const repeat = composeContentDNA({ topic: 'marketing', idea: 'understand customer needs', audience: 'new founders', index: 14, seed: 9 });
+  assert.equal(first.signature, repeat.signature);
+  assert.equal(first.text, repeat.text);
+  assert.equal(Object.keys(first.components).length, 7);
+});
+
+test('recombination varies DNA signatures and records the assembly on each draft', () => {
+  const posts = generatePosts({ topic: 'business finance', idea: 'track cash flow and review decisions', count: 80, seed: 4 });
+  assert.ok(posts.every((post) => post.dnaSignature && Object.keys(post.dnaComponents).length === 7));
+  assert.ok(new Set(posts.map((post) => post.dnaSignature)).size > 1);
+  const diversity = scoreDiversity(posts);
+  assert.equal(diversity.total, posts.length);
+  assert.ok(diversity.score > 0);
+  assert.equal(diversity.repeated, posts.length - diversity.uniqueSignatures);
+});
+
+test('DNA metadata is preserved in CSV and duplicate signatures are measurable', () => {
+  const posts = generatePosts({ topic: 'marketing', idea: 'test a clear offer', count: 12 });
+  const csv = toCsv(posts);
+  assert.match(csv, /dna_signature,dna_components/);
+  assert.match(csv, /misconception|question|contrast|beginner|observation|myth/);
+  assert.deepEqual(scoreDiversity([]), { score: 0, uniqueSignatures: 0, total: 0, repeated: 0 });
+});
+
+
+test('quality engine catches near-duplicates while retaining the earlier draft reference', () => {
+  const checked = assessQuality([
+    { id: 'a', text: 'A practical guide to building a budget helps small business owners track their cash flow and plan spending with care.' },
+    { id: 'b', text: 'A practical guide to building a budget helps small business owners track their cash flow and plan spending with care today.' },
+    { id: 'c', text: 'Compare customer interviews, product usage, and support requests before choosing the next marketing experiment.' },
+  ]);
+  assert.equal(checked[1].quality, 'review');
+  assert.ok(checked[1].qualityFlags.some((flag) => flag.code === 'near-duplicate'));
+  assert.equal(checked[1].duplicateOf, 'a');
+  assert.equal(checked[2].quality, 'ready');
+});
+
+test('finance claims with numbers, guarantees, and personal trade instructions are flagged', () => {
+  const checked = assessQuality([
+    { category: 'Finance', text: 'This investment will return 25% every year with no risk and guaranteed profits for everyone.' },
+    { category: 'Finance', text: 'You should buy this stock today and move your retirement savings into it.' },
+  ]);
+  assert.ok(checked[0].qualityFlags.some((flag) => flag.code === 'numeric-claim-needs-source'));
+  assert.ok(checked[0].qualityFlags.some((flag) => flag.code === 'guaranteed-outcome'));
+  assert.ok(checked[1].qualityFlags.some((flag) => flag.code === 'personalized-investment-direction'));
+  assert.ok(checked.every((post) => post.quality === 'review'));
+});
+
+test('quality summary reports average score, review count, near duplicates and evidence flags', () => {
+  const checked = assessQuality([
+    { id: 'one', text: 'A detailed practical lesson with enough words to explain the topic in a clear and useful way for readers.' },
+    { id: 'two', category: 'Finance', text: 'An investment can return 12% each year if the market conditions remain favourable and the evidence supports the claim.' },
+  ]);
+  const summary = summarizeQuality(checked);
+  assert.equal(summary.ready + summary.review, 2);
+  assert.ok(summary.averageScore >= 0 && summary.averageScore <= 100);
+  assert.equal(summary.evidenceFlags, 1);
+});
+
+test('CSV includes quality scores, structured flags and duplicate references', () => {
+  const checked = assessQuality([
+    { id: 'one', text: 'A useful detailed post about customer research, careful testing, and how to evaluate a marketing experiment.' },
+  ]);
+  const csv = toCsv(checked);
+  assert.match(csv, /quality_score,quality_flags,duplicate_of,similarity_to_previous/);
+  assert.match(csv, /100/);
 });
