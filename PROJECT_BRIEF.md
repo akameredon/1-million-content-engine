@@ -36,7 +36,7 @@ Generate large batches of original, short finance and marketing content drafts f
 - Deployment target: not configured/verified.
 
 ## Verification evidence
-- Build/test results: GitHub Actions run #21 passed: dependency installation, all 17 tests, and the production build.
+- Build/test results: GitHub Actions run #24 passed: dependency installation, all 21 tests, and the production build.
 - Preview URL: not configured.
 - Known gaps: small manually curated source sample; qualitative observations only; no transcript-level audits or performance attribution; local rule-based output; structural DNA diversity is not semantic originality; quality checks are heuristic; evidence approval is a human attestation and not an independent fact-check; no automated source retrieval; browser-local persistence; no auto-publishing.
 - Production approval: not requested.
