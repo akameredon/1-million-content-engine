@@ -5,7 +5,8 @@ A free-first, mobile-ready workspace for turning a topic and core idea into batc
 ## Current MVP
 
 - Generate up to 5,000 short drafts per batch using a transparent local pattern engine.
-- Optionally generate up to 10 AI-assisted drafts per request through a protected server-side Google Gemini adapter; AI output still passes through the local quality and evidence-review workflow.
+- Generate AI-assisted drafts through a no-API Gemini copy-and-paste workflow: prepare a structured prompt in the app, use the Gemini website, paste its JSON response back, and run the existing local quality and evidence-review workflow.
+- Continue generating up to 5,000 local pattern-based drafts per batch without an AI provider.
 - Browse an initial research library covering five public creator sources across finance and marketing.
 - Filter creator research by category or search by creator, topic, or technique.
 - Select a research-derived pattern or auto-mix all five when generating drafts.
@@ -22,6 +23,19 @@ A free-first, mobile-ready workspace for turning a topic and core idea into batc
 - Filter drafts that pass basic checks from drafts needing review.
 
 **Important:** The research library is a small, manually curated starter set based on public official creator pages, articles, and episode notes. It is not a comprehensive audit of their channels, does not measure why their content succeeds, and does not claim that a pattern caused growth. It does not scrape posts, copy scripts, train on creator accounts, or imitate distinctive voices. The local generator is a rule-based recombination engine. Optional AI generation is available only when the server owner configures the protected Gemini endpoint and access code. DNA variety is a structural diversity signal, not a guarantee that every post is factually correct, meaningfully distinct to a human reader, or ready to publish. "Ready" means only that these local heuristics found no flagged issue; it is not source verification, semantic originality certification, financial/legal review, or editorial approval. Similarity detection is approximate and uses bounded candidate comparisons to keep large batches responsive. A supplied URL is never treated as proof. A human reviewer must inspect the source and explicitly attest that it supports the stated claim. This is an editorial attestation, not independent automated fact-checking; reviewers remain responsible for source quality, context, dates, and excerpt accuracy. Rejected or merely provided sources do not pass the evidence gate. Browser-local data is not a secure multi-user review system.
+
+## Recommended AI workflow without API setup
+
+The default AI-assisted workflow does not require a Gemini API key, Vercel environment variables, server configuration, or a subscription:
+
+1. Choose **Gemini-assisted · no API key or setup** in the generator.
+2. Set a batch size of up to 10 and prepare the prompt.
+3. Copy the prompt and open [Gemini](https://gemini.google.com/app).
+4. Paste the prompt into Gemini and ask it to follow the JSON output format.
+5. Copy Gemini's complete JSON response back into the app.
+6. Import the response. The app validates the pattern IDs and runs its local quality checks before saving drafts.
+
+This is a manual handoff, not a direct API connection or automated generation job. The user remains in control of what is sent to Gemini and what is imported. Gemini availability and account limits are controlled by Google. Do not send confidential customer information, personal data, or sensitive financial details. Local checks are heuristics, not fact-checking; human review and claim-level evidence remain necessary.
 
 ## Optional AI generation (Google Gemini)
 
