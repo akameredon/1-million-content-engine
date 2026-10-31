@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { assessPosts, creatorFrameworks, generatePosts, scoreDiversity, toCsv } from './contentEngine.js';
+import { assessPosts, creatorFrameworks, generatePosts, toCsv } from './contentEngine.js';
+import { scoreDiversity } from './contentDNA.js';
 import { creatorProfiles, researchSources } from './researchLibrary.js';
 import { summarizeQuality } from './qualityEngine.js';
 
