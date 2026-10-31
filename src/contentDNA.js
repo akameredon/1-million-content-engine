@@ -56,8 +56,11 @@ const dimensions = {
 const dimensionNames = Object.keys(dimensions);
 
 function pick(items, index, seed, offset) {
-  const n = Number(seed) || 0;
-  return items[((index * 17) + (n * 13) + offset) % items.length];
+  const n = Math.trunc(Number(seed) || 0);
+  let value = Math.imul(index + 1, 2654435761) ^ Math.imul(n + 1, 2246822519) ^ Math.imul(offset + 1, 3266489917);
+  value = Math.imul(value ^ (value >>> 16), 2246822519);
+  value = Math.imul(value ^ (value >>> 13), 3266489917);
+  return items[(value >>> 0) % items.length];
 }
 
 export function composeContentDNA({ topic, idea, audience, index = 0, seed = 0 }) {
