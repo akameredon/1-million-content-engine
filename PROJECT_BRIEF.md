@@ -45,7 +45,7 @@ Generate large batches of original, short finance and marketing content drafts f
 - Deployment target: not configured/verified.
 
 ## Verification evidence
-- Build/test results: pending CI for AI Generation v1.
+- Build/test results: GitHub Actions run #32 passed: dependency installation, all 27 tests, and the production build.
 - Preview URL: not configured.
 - Known gaps: small manually curated source sample; qualitative observations only; no transcript-level audits or performance attribution; local rule-based output plus optional server-configured Gemini AI; AI output is not fact-checked; structural DNA diversity is not semantic originality; quality checks are heuristic; evidence approval is a human attestation and not an independent fact-check; no automated source retrieval; browser-local persistence; no auto-publishing.
 - Production approval: not requested.
