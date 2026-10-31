@@ -1,10 +1,12 @@
-export const creatorFrameworks = [
-  { name: "Contrarian educator", mechanics: ["challenge a common assumption", "explain the hidden cost", "offer a practical alternative"], note: "A general communication framework, not an imitation of any creator." },
-  { name: "Story-led teacher", mechanics: ["open with a relatable moment", "reveal the lesson", "give one action to try"], note: "A general communication framework, not an imitation of any creator." },
-  { name: "Numbers-first analyst", mechanics: ["lead with a measurable question", "show the reasoning", "state the limitation"], note: "A general communication framework, not an imitation of any creator." },
-  { name: "Direct-response strategist", mechanics: ["name a costly problem", "connect a solution to an outcome", "invite a low-friction next step"], note: "A general communication framework, not an imitation of any creator." },
-  { name: "Myth-to-method explainer", mechanics: ["name a popular myth", "replace it with a clearer model", "show the first step"], note: "A general communication framework, not an imitation of any creator." },
-];
+import { researchPatterns } from './researchLibrary.js';
+
+export const creatorFrameworks = researchPatterns.map((pattern) => ({
+  id: pattern.id,
+  name: pattern.name,
+  mechanics: pattern.mechanics,
+  sourceIds: pattern.sourceIds,
+  note: "A generalized communication pattern, not an imitation of a creator.",
+}));
 
 const hooks = [
   (topic) => `Most people misunderstand ${topic.toLowerCase()}. Here's the part worth paying attention to:`,
@@ -15,12 +17,12 @@ const hooks = [
   (topic) => `One mistake can quietly undermine your progress with ${topic.toLowerCase()}:`,
 ];
 const lessons = [
-  (idea) => `The real leverage is understanding ${idea}. Focus on the decision you can repeat, not a shortcut you cannot explain.`,
+  (idea) => `The useful principle is ${idea}. Focus on the decision you can repeat, not a shortcut you cannot explain.`,
   (idea) => `Break ${idea} into one small action, one measurable result, and one review. That makes improvement easier to see.`,
   (idea) => `Do not confuse activity with progress. Test whether ${idea} is producing the outcome you actually want.`,
-  (idea) => `A better approach is to learn the principle behind ${idea}, then adapt it to your own audience and constraints.`,
+  (idea) => `Learn the principle behind ${idea}, then adapt it to your audience and constraints.`,
   (idea) => `Start small: define what success means for ${idea}, take one step, and compare the result with your starting point.`,
-  (idea) => `The strongest system for ${idea} is one you can explain, measure, and improve without depending on hype.`,
+  (idea) => `A strong system for ${idea} is one you can explain, measure, and improve without depending on hype.`,
 ];
 const angles = [
   "Think about the first decision a beginner needs to make.",
@@ -52,7 +54,7 @@ const angles = [
   "Check whether the advice fits the audience's actual situation.",
   "Make room for uncertainty when the evidence is incomplete.",
   "Turn the insight into a question your audience can answer.",
-  "Build trust by explaining the trade-offs, not hiding them."
+  "Build trust by explaining the trade-offs, not hiding them.",
 ];
 const endings = [
   "Save this and test the idea before you scale it.",
@@ -63,32 +65,55 @@ const endings = [
   "Send this to someone building in this space.",
 ];
 
-export function generatePosts({ topic, idea, audience = "creators and business owners", category = "Marketing", count = 10, seed = 0 }) {
+function buildPatternText(patternId, { topic, idea, audience, hook, angle, lesson, ending }) {
+  switch (patternId) {
+    case "plain-language-explainer":
+      return `${hook} Think of it in practical terms: ${idea}. ${angle} ${lesson} ${ending}`;
+    case "evidence-first-teacher":
+      return `Before accepting a claim about ${topic}, ask what evidence would support it. ${angle} ${lesson} Leave room for uncertainty when the evidence is incomplete. ${ending}`;
+    case "audience-intent-guide":
+      return `If you are ${audience}, start with the problem you need to solve in ${topic}. ${angle} ${lesson} ${ending}`;
+    case "problem-to-process":
+      return `If progress with ${topic} has stalled, do not add more tasks yet. Find the decision or bottleneck that matters most. ${lesson} ${angle} ${ending}`;
+    case "story-to-lesson":
+      return `Imagine working on ${topic} and trying several things at once. The turning point is choosing one useful lesson: ${idea}. ${angle} ${lesson} ${ending}`;
+    default:
+      return `${hook} ${angle} ${lesson} ${ending}`;
+  }
+}
+
+export function generatePosts({ topic, idea, audience = "creators and business owners", category = "Marketing", count = 10, seed = 0, patternId = "auto" }) {
   const cleanTopic = String(topic || "").trim();
   const cleanIdea = String(idea || "").trim();
+  const cleanAudience = String(audience || "your audience").trim();
   if (!cleanTopic || !cleanIdea) throw new Error("Add a topic and a core idea before generating.");
   const total = Math.max(1, Math.min(5000, Number(count) || 1));
+  const selectedPatterns = patternId === "auto" ? creatorFrameworks : creatorFrameworks.filter((pattern) => pattern.id === patternId);
+  if (!selectedPatterns.length) throw new Error("Choose a valid research pattern.");
   const posts = [];
   const seen = new Set();
   let cursor = Math.max(0, Number(seed) || 0);
   let attempts = 0;
-  while (posts.length < total && attempts < total * 12) {
-    const hook = hooks[cursor % hooks.length](cleanTopic);
-    const lesson = lessons[Math.floor(cursor / hooks.length) % lessons.length](cleanIdea);
-    const ending = endings[Math.floor(cursor / (hooks.length * lessons.length)) % endings.length];
-    const angle = angles[Math.floor(cursor / (hooks.length * lessons.length * endings.length)) % angles.length];
-    const framework = creatorFrameworks[cursor % creatorFrameworks.length];
-    const post = `${hook} ${angle} ${lesson} ${ending}`;
-    const key = post.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  while (posts.length < total && attempts < total * 20) {
+    const variant = Math.floor(cursor / selectedPatterns.length);
+    const pattern = selectedPatterns[cursor % selectedPatterns.length];
+    const hook = hooks[variant % hooks.length](cleanTopic);
+    const lesson = lessons[Math.floor(variant / hooks.length) % lessons.length](cleanIdea);
+    const ending = endings[Math.floor(variant / (hooks.length * lessons.length)) % endings.length];
+    const angle = angles[Math.floor(variant / (hooks.length * lessons.length * endings.length)) % angles.length];
+    const text = buildPatternText(pattern.id, { topic: cleanTopic, idea: cleanIdea, audience: cleanAudience, hook, angle, lesson, ending });
+    const key = text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
     if (!seen.has(key)) {
       seen.add(key);
       posts.push({
         id: `post-${cursor}`,
-        text: post,
+        text,
         category,
-        audience,
-        framework: framework.name,
-        mechanics: framework.mechanics,
+        audience: cleanAudience,
+        framework: pattern.name,
+        patternId: pattern.id,
+        mechanics: pattern.mechanics,
+        sourceIds: pattern.sourceIds,
         status: "draft",
       });
     }
@@ -117,5 +142,8 @@ export function assessPosts(posts) {
 
 export function toCsv(posts) {
   const quote = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
-  return ["text,category,audience,framework,status,quality,issues", ...posts.map((p) => [p.text,p.category,p.audience,p.framework,p.status,p.quality,(p.issues || []).join("; ")].map(quote).join(","))].join("\n");
+  return [
+    "text,category,audience,framework,pattern_id,source_ids,status,quality,issues",
+    ...posts.map((post) => [post.text, post.category, post.audience, post.framework, post.patternId, (post.sourceIds || []).join("; "), post.status, post.quality, (post.issues || []).join("; ")].map(quote).join(",")),
+  ].join("\n");
 }
