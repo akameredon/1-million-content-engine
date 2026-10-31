@@ -32,6 +32,10 @@ function originIsSameSite(req) {
 
 async function readBody(req) {
   if (req.body && typeof req.body === "object") return req.body;
+  if (typeof req.body === "string") {
+    if (Buffer.byteLength(req.body) > MAX_BODY_BYTES) throw new Error("Request body is too large.");
+    try { return JSON.parse(req.body); } catch { throw new Error("Send a valid JSON request."); }
+  }
   let raw = "";
   for await (const chunk of req) {
     raw += chunk.toString();
@@ -61,6 +65,9 @@ function takeRateLimit(req) {
   const ip = String(forwarded || "unknown").split(",")[0].trim().slice(0, 80);
   const now = Date.now();
   const current = requestWindows.get(ip);
+  if (requestWindows.size > 5000) {
+    for (const [key, entry] of requestWindows) if (now - entry.startedAt >= WINDOW_MS) requestWindows.delete(key);
+  }
   if (!current || now - current.startedAt >= WINDOW_MS) {
     requestWindows.set(ip, { startedAt: now, count: 1 });
     return true;
@@ -134,13 +141,13 @@ export default async function handler(req, res) {
   const model = String(process.env.GEMINI_MODEL || DEFAULT_MODEL);
   if (!/^gemini-[a-z0-9.-]+$/.test(model)) return send(res, 500, { error: "The configured Gemini model name is invalid." });
   const schema = {
-    type: "OBJECT",
+    type: "object",
     properties: {
       posts: {
-        type: "ARRAY",
+        type: "array",
         items: {
           type: "OBJECT",
-          properties: { text: { type: "STRING" }, angle: { type: "STRING" } },
+          properties: { text: { type: "string" }, angle: { type: "STRING" } },
           required: ["text", "angle"],
         },
       },
@@ -155,7 +162,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: "You are a careful original short-form content writer. Follow the user's content brief while obeying all editorial, originality, and safety rules. Never claim that generated content is fact-checked." }] },
         contents: [{ role: "user", parts: [{ text: makePrompt(input) }] }],
-        generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.85, maxOutputTokens: 4096 },
+        generationConfig: { responseFormat: { text: { mimeType: "APPLICATION_JSON", schema } }, temperature: 0.85, maxOutputTokens: 4096 },
       }),
       signal: AbortSignal.timeout(45_000),
     });
