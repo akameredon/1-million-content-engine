@@ -56,7 +56,7 @@ export default function App() {
   }
   function updateEvidenceDraft(postId, field, value) {
     setPosts((current) => current.map((post) => post.id === postId
-      ? { ...post, evidenceDraft: { ...(post.evidenceDraft || {}), [field]: value } }
+      ? { ...post, evidence: post.evidence ? { ...post.evidence, status: "provided", reviewedAt: null, reviewerNote: "" } : post.evidence, evidenceDraft: { ...(post.evidenceDraft || {}), [field]: value } }
       : post));
   }
   function saveEvidence(post) {
