@@ -22,7 +22,7 @@ const lessons = [
   (idea) => `Start small: define what success means for ${idea}, take one step, and compare the result with your starting point.`,
   (idea) => `The strongest system for ${idea} is one you can explain, measure, and improve without depending on hype.`,
 ];
-const endings = [
+const angles = [\n  "Think about the first decision a beginner needs to make.",\n  "Look at the problem from the customer's point of view.",\n  "Separate what you can control from what you cannot.",\n  "Measure the result instead of relying on a feeling.",\n  "Start with the smallest useful experiment.",\n  "Ask what would make this easier to repeat next week.",\n  "Notice the difference between a tactic and a strategy.",\n  "Build around the real constraint, not the loudest trend.",\n  "Make the next step clear enough to act on today.",\n  "Check whether the process works for someone with limited time.",\n  "Compare the cost of waiting with the cost of taking a small step.",\n  "Find the assumption that deserves to be tested first.",\n  "Prefer a simple process you can improve over a complex one you cannot maintain.",\n  "Use feedback from real people to improve the next version.",\n  "Define the outcome before choosing the tool.",\n  "Look for the bottleneck that slows everything else down.",\n  "Make the lesson useful even to someone starting from zero.",\n  "Turn the big goal into a decision you can make this afternoon.",\n  "Ask what evidence would change your mind.",\n  "Keep the message clear enough to explain in one breath.",\n  "Choose consistency that you can sustain over intensity that burns out.",\n  "Review what worked, what failed, and what you will change.",\n  "Make the value obvious before asking for attention.",\n  "Do not scale a process until the small version works.",\n  "Give the audience one useful idea rather than five vague promises.",\n  "Focus on the habit or system behind the visible result.",\n  "Check whether the advice fits the audience's actual situation.",\n  "Make room for uncertainty when the evidence is incomplete.",\n  "Turn the insight into a question your audience can answer.",\n  "Build trust by explaining the trade-offs, not hiding them."\n];\nconst endings = [
   "Save this and test the idea before you scale it.",
   "What would you add? Share your experience.",
   "Use the principle; make the execution your own.",
@@ -43,9 +43,9 @@ export function generatePosts({ topic, idea, audience = "creators and business o
   while (posts.length < total && attempts < total * 12) {
     const hook = hooks[cursor % hooks.length](cleanTopic);
     const lesson = lessons[Math.floor(cursor / hooks.length) % lessons.length](cleanIdea);
-    const ending = endings[Math.floor(cursor / (hooks.length * lessons.length)) % endings.length];
+    const ending = endings[Math.floor(cursor / (hooks.length * lessons.length)) % endings.length];\n    const angle = angles[Math.floor(cursor / (hooks.length * lessons.length * endings.length)) % angles.length];
     const framework = creatorFrameworks[cursor % creatorFrameworks.length];
-    const post = `${hook} ${lesson} ${ending}`;
+    const post = `${hook} ${angle} ${lesson} ${ending}`;
     const key = post.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
     if (!seen.has(key)) {
       seen.add(key);
