@@ -8,16 +8,19 @@ export default function App() {
   const [form, setForm] = useState(initial);
   const [posts, setPosts] = useState([]);
   const [notice, setNotice] = useState('Your drafts stay in this browser until you export them.');
-  const [filter, setFilter] = useState('all');\n  const [loaded, setLoaded] = useState(false);
+  const [filter, setFilter] = useState('all');
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
       if (Array.isArray(saved)) setPosts(saved);
     } catch { /* Ignore invalid local browser data. */ }
+    finally { setLoaded(true); }
   }, []);
 
   useEffect(() => {
+    if (!loaded) return;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(posts)); }
     catch { setNotice('Browser storage is full. Export your drafts to keep a copy.'); }
   }, [posts, loaded]);
