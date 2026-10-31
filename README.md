@@ -1,10 +1,23 @@
-# AI App Starter
+# 1 Million Content Engine
 
-The reusable, mobile-first starting point for new software projects in the AI App Factory. It includes React, Vite, a responsive UI, React render smoke tests, a DOM-backed interaction test, and automated production-build verification.
+A free-first, mobile-ready workspace for turning a topic and core idea into batches of original finance, marketing, and business content drafts.
 
-## Quick start
+## Current MVP
 
-Requirements: Node.js 22.13 or newer in the Node 22 line (or another compatible current LTS).
+- Generate up to 5,000 short drafts per batch using a transparent local pattern engine.
+- Browse an initial research library covering five public creator sources across finance and marketing.
+- Filter creator research by category or search by creator, topic, or technique.
+- Select a research-derived pattern or auto-mix all five when generating drafts.
+- Preserve pattern IDs and source IDs in each draft and in CSV exports.
+- Run basic quality checks for length, duplicates, and claims that need evidence.
+- Keep drafts in browser storage, copy individual posts, and export the complete library as CSV.
+- Filter drafts that pass basic checks from drafts needing review.
+
+**Important:** The research library is a small, manually curated starter set based on public official creator pages, articles, and episode notes. It is not a comprehensive audit of their channels, does not measure why their content succeeds, and does not claim that a pattern caused growth. It does not scrape posts, copy scripts, train on creator accounts, or imitate distinctive voices. The generator is still a local rule-based engine, not an external AI model. "Ready" means only that basic automated checks found no flagged issue; it is not fact-checking or editorial approval.
+
+## Run locally
+
+Requires Node.js 22.13+.
 
 ```bash
 npm ci
@@ -13,18 +26,18 @@ npm run build
 npm run dev
 ```
 
-Framework and build-tool dependencies are pinned, and `package-lock.json` records the full dependency tree. CI uses `npm ci` so builds install the exact lockfile versions. The interaction test mounts the real checklist in a DOM environment and verifies that checking and unchecking items updates both the visible count and accessible progress value.
+## Product workflow
 
-## Start a new product
+Research → Learn general mechanics → Recombine → Generate → Quality review → Approve → Publish → Measure.
 
-1. Use GitHub's **Use this template** action to create a new repository.
-2. Rename the product in `index.html` and `src/App.jsx`.
-3. Read `AGENTS.md` and complete `PROJECT_BRIEF.md` before substantial coding.
-4. Build one end-to-end user journey first; keep later features out of the MVP.
-5. Add a backend only when the product needs it. Keep credentials in server-side/provider environment settings, never source code.
-6. Run tests and the production build. GitHub Actions does this on every push and pull request.
-7. Deploy a preview and test the critical journey on a phone-sized viewport before release.
+The long-term goal is to generate a large content inventory, including potentially one million variations in a batch-processing environment. That is a generation target, not a claim about current capacity or permission to publish at that volume. Each social platform has its own API access, rate limits, spam rules, and publishing requirements. Publishing integrations remain out of scope until official API access, authorization, and platform-specific safeguards are configured.
 
-No database, authentication, payment provider, or paid AI API is included by default. Add only what the product needs, and inspect security and cost first.
+## Next milestones
 
-Canonical operating process: [AI App Factory](https://github.com/akameredon/ai-app-factory).
+1. Expand creator coverage with dated samples, transcript-level observations, and independent human review.
+2. Add optional AI provider adapters behind explicit configuration; no paid provider is assumed.
+3. Improve originality, duplicate detection, and evidence checks.
+4. Add review queues and content calendar.
+5. Implement official platform adapters only after permissions and rate limits are verified.
+
+No backend, login, analytics, AI provider, or paid subscription is required for this local MVP. Drafts stay in the browser unless exported.

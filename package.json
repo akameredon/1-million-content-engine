@@ -1,7 +1,7 @@
 {
-  "name": "ai-app-starter",
+  "name": "1-million-content-engine",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.1.0",
   "type": "module",
   "engines": { "node": ">=22.13.0" },
   "scripts": {
