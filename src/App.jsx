@@ -8,7 +8,7 @@ export default function App() {
   const [form, setForm] = useState(initial);
   const [posts, setPosts] = useState([]);
   const [notice, setNotice] = useState('Your drafts stay in this browser until you export them.');
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('all');\n  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     try {
@@ -20,7 +20,7 @@ export default function App() {
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(posts)); }
     catch { setNotice('Browser storage is full. Export your drafts to keep a copy.'); }
-  }, [posts]);
+  }, [posts, loaded]);
 
   const readyCount = posts.filter((p) => p.quality === 'ready').length;
   const visiblePosts = useMemo(() => filter === 'all' ? posts : posts.filter((p) => p.quality === filter), [posts, filter]);
